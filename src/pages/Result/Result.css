@@ -330,3 +330,48 @@
 .results-table tr:first-child td {
   padding-top: 1.5rem;
 }
+
+
+/* Speech Button Styles */
+.speech-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  margin-left: auto;
+  transition: all 0.3s ease;
+}
+
+.speech-btn:hover {
+  color: #23C8AC;
+}
+
+.speech-btn.active {
+  color: #23C8AC;
+}
+
+/* Result Tabs Container */
+.result-tabs {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 2rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  position: relative;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .tab-btn, .speech-btn {
+    transition: none;
+  }
+}
+
+/* Print styles for speech button */
+@media print {
+  .speech-btn {
+    display: none !important;
+  }
+}
