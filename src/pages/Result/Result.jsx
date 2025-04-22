@@ -3,7 +3,7 @@ import './result.css';
 import Navbar from "../../components/Navbar/Navbar";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ClipLoader } from "react-spinners";
-import { FaArrowLeft, FaRedo, FaCheckCircle, FaExclamationTriangle, FaDownload } from 'react-icons/fa';
+import { FaArrowLeft, FaRedo, FaCheckCircle, FaExclamationTriangle, FaDownload, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -18,14 +18,21 @@ export default function Result() {
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
 
   useEffect(() => {
+    // Check if speech synthesis is supported
+    if (!window.speechSynthesis) {
+      setSpeechSupported(false);
+    }
+
     if (rawResult) {
       const timer = setTimeout(() => {
         setResult({
           ...rawResult,
           timestamp: new Date().toLocaleString(),
-          patientName: patientName || 'Not Specified' // Add patient name to result
+          patientName: patientName || 'Not Specified'
         });
         setLoading(false);
       }, 1500);
@@ -66,6 +73,48 @@ export default function Result() {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  const speakResults = () => {
+    if (!speechSupported) return;
+    
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const speech = new SpeechSynthesisUtterance();
+    speech.lang = 'en-US';
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    
+    let speechText = `Blood Analysis Results for patient ${result.patientName}. `;
+    
+    if (activeTab === 'summary') {
+      speechText += `Summary results: White Blood Cell count is ${result.WBC || 'not available'}, 
+        Red Blood Cell count is ${result.RBC || 'not available'}, 
+        and Platelet count is ${result.Platelets || 'not available'}. 
+        All values are within normal range.`;
+    } else if (activeTab === 'details') {
+      speechText += `Detailed results: White Blood Cells are ${result.WBC || 'not available'} cells per microliter, 
+        normal range is 4,500 to 11,000. Red Blood Cells are ${result.RBC || 'not available'} million per microliter, 
+        normal range is 4.5 to 5.9. Platelets are ${result.Platelets || 'not available'} thousand per microliter, 
+        normal range is 150 to 450. All values are within normal limits.`;
+    } else if (activeTab === 'visualization') {
+      speechText += `Visualization shows cell counts: White Blood Cells at ${result.WBC || 'not available'}, 
+        Red Blood Cells at ${result.RBC || 'not available'}, and Platelets at ${result.Platelets || 'not available'}. 
+        The bar chart displays these values for comparison.`;
+    }
+    
+    speech.text = speechText;
+    
+    speech.onend = () => {
+      setIsSpeaking(false);
+    };
+    
+    window.speechSynthesis.speak(speech);
+    setIsSpeaking(true);
   };
 
   if (loading) {
@@ -141,6 +190,16 @@ export default function Result() {
             >
               Visualization
             </button>
+            
+            {speechSupported && (
+              <button 
+                className={`speech-btn ${isSpeaking ? 'active' : ''}`}
+                onClick={speakResults}
+                title={isSpeaking ? "Stop speech" : "Read results aloud"}
+              >
+                {isSpeaking ? <FaVolumeMute /> : <FaVolumeUp />}
+              </button>
+            )}
           </div>
 
           <div className="tab-content">
